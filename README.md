@@ -14,6 +14,7 @@ TODO:<br>
 <br>
 <br>
 docker打包命令：<br>
+docker build -t ncov:v1.0 .<br>
 docker run -itd --name ncov --restart always ncov:v1.0<br>
 因为此项目主要用来爬取数据，因此docker run时不开放任何接口
 
