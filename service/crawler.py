@@ -51,7 +51,6 @@ class Crawler:
             area_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getAreaStat'})))
             abroad_information = re.search(r'\[(.*)\]',
                                            str(soup.find('script', attrs={'id': 'getListByCountryTypeService2'})))
-            city_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getIndexRecommendList'})))
             news = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService'})))
 
             if not overall_information or not province_information or not area_information or not news:
@@ -60,7 +59,8 @@ class Crawler:
             self.overall_parser(overall_information=overall_information)
             self.province_parser(province_information=province_information)
             self.area_parser(area_information=area_information)
-            self.abroad_parser(abroad_information=abroad_information)
+            if abroad_information is not None:
+                self.abroad_parser(abroad_information=abroad_information)
             self.news_parser(news=news)
 
             break
