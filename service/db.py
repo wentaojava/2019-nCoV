@@ -20,3 +20,9 @@ class DB:
 
     def find_one(self, collection, data=None):
         return self.db[collection].find_one(data)
+
+    def find(self, collection, data=None):
+        return self.db[collection].find(data)
+
+    def update_one(self, collection, query=None,data_after=None):
+        return self.db[collection].update_one(query,data_after)

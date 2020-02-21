@@ -33,7 +33,7 @@ class Crawler:
     def run(self):
         while True:
             self.crawler()
-            time.sleep(600)
+            time.sleep(1800)
 
     def crawler(self):
         while True:
@@ -44,24 +44,22 @@ class Crawler:
                 continue
             soup = BeautifulSoup(r.content, 'lxml')
 
-            overall_information = re.search(r'\{("id".*?)\]\}',
-                                            str(soup.find('script', attrs={'id': 'getStatisticsService'})))
+            # overall_information = re.search(r'\{("id".*?)\]\}',str(soup.find('script', attrs={'id': 'getStatisticsService'})))
             province_information = re.search(r'\[(.*?)\]',
                                              str(soup.find('script', attrs={'id': 'getListByCountryTypeService1'})))
             area_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getAreaStat'})))
-            abroad_information = re.search(r'\[(.*)\]',
-                                           str(soup.find('script', attrs={'id': 'getListByCountryTypeService2'})))
-            news = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService'})))
+            #abroad_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService2'})))
+            # news = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService'})))
 
-            if not overall_information or not province_information or not area_information or not news:
+            if not province_information or not area_information:
                 continue
 
-            self.overall_parser(overall_information=overall_information)
+            # self.overall_parser(overall_information=overall_information)
             self.province_parser(province_information=province_information)
             self.area_parser(area_information=area_information)
-            if abroad_information is not None:
-                self.abroad_parser(abroad_information=abroad_information)
-            self.news_parser(news=news)
+            #if abroad_information is not None:
+                #self.abroad_parser(abroad_information=abroad_information)
+            # self.news_parser(news=news)
 
             break
 
@@ -118,12 +116,24 @@ class Crawler:
         area_information = json.loads(area_information.group(0))
         for area in area_information:
             area['comment'] = area['comment'].replace(' ', '')
+            #检查数据是否有变更，无变更则跳过
             if self.db.find_one(collection='DXYArea', data=area):
+              continue
+            # 数据库存在对应省份数据则更新
+            area_in_mongo = self.db.find_one(collection='DXYArea',
+                                             data={'provinceShortName': area['provinceShortName']})
+            if area_in_mongo is not None:
+                self.db.update_one(collection='DXYArea', query={'_id': area_in_mongo['_id']}, data_after={
+                    '$set': {'confirmedCount': 0, 'suspectedCount': area['suspectedCount'],
+                             'curedCount': area['curedCount'], 'deadCount': area['deadCount'],
+                             'cities': area['cities'], 'updateTime':self.crawl_timestamp}})
+                logger.info(area['provinceShortName'] + "进行数据更新")
                 continue
+            # 不存在则插入
             area['country'] = '中国'
             area['updateTime'] = self.crawl_timestamp
-
             self.db.insert(collection='DXYArea', data=area)
+            logger.info(area['provinceShortName'] + "进行数据新增")
 
     def abroad_parser(self, abroad_information):
         countries = json.loads(abroad_information.group(0))
