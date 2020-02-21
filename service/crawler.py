@@ -45,17 +45,16 @@ class Crawler:
             soup = BeautifulSoup(r.content, 'lxml')
 
             # overall_information = re.search(r'\{("id".*?)\]\}',str(soup.find('script', attrs={'id': 'getStatisticsService'})))
-            province_information = re.search(r'\[(.*?)\]',
-                                             str(soup.find('script', attrs={'id': 'getListByCountryTypeService1'})))
+            #province_information = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService1'})))
             area_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getAreaStat'})))
             #abroad_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService2'})))
             # news = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService'})))
 
-            if not province_information or not area_information:
+            if  not area_information:
                 continue
 
             # self.overall_parser(overall_information=overall_information)
-            self.province_parser(province_information=province_information)
+            #self.province_parser(province_information=province_information)
             self.area_parser(area_information=area_information)
             #if abroad_information is not None:
                 #self.abroad_parser(abroad_information=abroad_information)
@@ -124,7 +123,7 @@ class Crawler:
                                              data={'provinceShortName': area['provinceShortName']})
             if area_in_mongo is not None:
                 self.db.update_one(collection='DXYArea', query={'_id': area_in_mongo['_id']}, data_after={
-                    '$set': {'confirmedCount': 0, 'suspectedCount': area['suspectedCount'],
+                    '$set': {'confirmedCount': area['confirmedCount'], 'suspectedCount': area['suspectedCount'],
                              'curedCount': area['curedCount'], 'deadCount': area['deadCount'],
                              'cities': area['cities'], 'updateTime':self.crawl_timestamp}})
                 logger.info(area['provinceShortName'] + "进行数据更新")
