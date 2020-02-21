@@ -45,19 +45,19 @@ class Crawler:
             soup = BeautifulSoup(r.content, 'lxml')
 
             # overall_information = re.search(r'\{("id".*?)\]\}',str(soup.find('script', attrs={'id': 'getStatisticsService'})))
-            #province_information = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService1'})))
+            # province_information = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService1'})))
             area_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getAreaStat'})))
-            #abroad_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService2'})))
+            # abroad_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService2'})))
             # news = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService'})))
 
-            if  not area_information:
+            if not area_information:
                 continue
 
             # self.overall_parser(overall_information=overall_information)
-            #self.province_parser(province_information=province_information)
+            # self.province_parser(province_information=province_information)
             self.area_parser(area_information=area_information)
-            #if abroad_information is not None:
-                #self.abroad_parser(abroad_information=abroad_information)
+            # if abroad_information is not None:
+            # self.abroad_parser(abroad_information=abroad_information)
             # self.news_parser(news=news)
 
             break
@@ -115,17 +115,18 @@ class Crawler:
         area_information = json.loads(area_information.group(0))
         for area in area_information:
             area['comment'] = area['comment'].replace(' ', '')
-            #检查数据是否有变更，无变更则跳过
+            # 检查数据是否有变更，无变更则跳过
             if self.db.find_one(collection='DXYArea', data=area):
-              continue
+                continue
             # 数据库存在对应省份数据则更新
             area_in_mongo = self.db.find_one(collection='DXYArea',
                                              data={'provinceShortName': area['provinceShortName']})
             if area_in_mongo is not None:
                 self.db.update_one(collection='DXYArea', query={'_id': area_in_mongo['_id']}, data_after={
                     '$set': {'confirmedCount': area['confirmedCount'], 'suspectedCount': area['suspectedCount'],
+                             'currentConfirmedCount': area['currentConfirmedCount'],
                              'curedCount': area['curedCount'], 'deadCount': area['deadCount'],
-                             'cities': area['cities'], 'updateTime':self.crawl_timestamp}})
+                             'cities': area['cities'], 'updateTime': self.crawl_timestamp}})
                 logger.info(area['provinceShortName'] + "进行数据更新")
                 continue
             # 不存在则插入
